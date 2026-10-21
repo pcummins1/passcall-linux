@@ -13,7 +13,7 @@ optdepends=('chromium: preferred browser'
             'firefox: alternative browser'
             'systemd: kiosk mode as a user service; keeps the machine awake')
 source=("$pkgname-$pkgver.tar.gz::https://github.com/pcummins1/passcall-linux/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SHA256_OF_RELEASE_TARBALL')
+sha256sums=('c7cd2ec21660494ef3f8027ea877a5134303624182a5f73f101f7b3f03287b62')
 
 package() {
   cd "passcall-linux-$pkgver"

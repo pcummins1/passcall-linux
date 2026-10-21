@@ -1,0 +1,17 @@
+pkgbase = passcall-window
+	pkgdesc = PassCall window launcher: a window between homes that opens when you both walk by
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://passcall.io/linux/
+	arch = any
+	license = MIT
+	depends = sh
+	optdepends = chromium: preferred browser
+	optdepends = google-chrome: alternative browser
+	optdepends = brave-bin: alternative browser
+	optdepends = firefox: alternative browser
+	optdepends = systemd: kiosk mode as a user service; keeps the machine awake
+	source = passcall-window-1.0.0.tar.gz::https://github.com/pcummins1/passcall-linux/archive/refs/tags/v1.0.0.tar.gz
+	sha256sums = c7cd2ec21660494ef3f8027ea877a5134303624182a5f73f101f7b3f03287b62
+
+pkgname = passcall-window
