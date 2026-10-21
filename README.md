@@ -25,6 +25,8 @@ Needs Chromium, Google Chrome, Brave or Firefox (Chromium-based browsers are pre
 
 ## Tips
 
+- Switching modes: a browser already running with the PassCall profile keeps its current window, so close the open PassCall window before starting kiosk mode by hand.
+
 - Lid closed on a laptop: the webcam is in the lid, so a laptop on a shelf wants the lid open. Use an external webcam if it must stay closed.
 - Auto-login: for a dedicated device, set your desktop to log in automatically so a power cut brings the window back on its own.
 - Raspberry Pi: this works on Pi OS with Chromium; the `passcall-pi` kit adds Home Assistant and a full kiosk image.
