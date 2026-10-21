@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PassCall
+Comment=A window between homes
+Exec=passcall-window
+Icon=passcall
+Terminal=false
+Categories=Network;Video;
+StartupWMClass=PassCall

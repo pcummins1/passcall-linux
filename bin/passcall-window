@@ -1,0 +1,64 @@
+#!/bin/sh
+# PassCall for Linux: opens https://my.passcall.io/ in a browser window of its own,
+# with its own profile, and keeps the machine awake while it runs.
+#
+#   passcall-window            app mode: a normal window with the PassCall icon
+#   passcall-window --kiosk    kiosk mode: full screen, no browser chrome
+#
+# The first run asks once for the camera and microphone; the answer is remembered in
+# the profile. Nothing else of yours is touched: the profile lives in
+# ~/.config/passcall-window, apart from your everyday browser.
+set -u
+URL="https://my.passcall.io/"
+PROFILE="${XDG_CONFIG_HOME:-$HOME/.config}/passcall-window"
+MODE="app"
+[ "${1:-}" = "--kiosk" ] && MODE="kiosk"
+
+find_browser() {
+  for b in chromium chromium-browser google-chrome google-chrome-stable brave-browser microsoft-edge; do
+    if command -v "$b" >/dev/null 2>&1; then echo "$b"; return; fi
+  done
+  if command -v flatpak >/dev/null 2>&1; then
+    for id in org.chromium.Chromium com.google.Chrome com.brave.Browser; do
+      if flatpak info "$id" >/dev/null 2>&1; then echo "flatpak run $id"; return; fi
+    done
+  fi
+  if command -v firefox >/dev/null 2>&1; then echo "firefox"; return; fi
+  echo ""
+}
+
+BROWSER="$(find_browser)"
+if [ -z "$BROWSER" ]; then
+  echo "PassCall needs Chromium, Google Chrome, Brave or Firefox. Install one and run this again." >&2
+  exit 1
+fi
+
+# Keep the screen on and the machine awake for as long as the window runs. logind
+# covers sleep and the lid on every desktop; the X11 and GNOME calls cover screen blanking.
+if [ -n "${DISPLAY:-}" ] && command -v xset >/dev/null 2>&1; then xset s off -dpms 2>/dev/null || true; fi
+INHIBIT=""
+if command -v systemd-inhibit >/dev/null 2>&1; then
+  INHIBIT="systemd-inhibit --what=idle:sleep:handle-lid-switch --who=PassCall --why=The_window_is_open --mode=block"
+fi
+if command -v gnome-session-inhibit >/dev/null 2>&1; then
+  INHIBIT="$INHIBIT gnome-session-inhibit --inhibit idle:suspend --reason PassCall"
+fi
+
+case "$BROWSER" in
+  firefox)
+    mkdir -p "$PROFILE/firefox"
+    if [ "$MODE" = "kiosk" ]; then
+      exec $INHIBIT firefox --profile "$PROFILE/firefox" --kiosk --new-window "$URL"
+    else
+      exec $INHIBIT firefox --profile "$PROFILE/firefox" --new-window "$URL"
+    fi
+    ;;
+  *)
+    FLAGS="--user-data-dir=$PROFILE --no-first-run --no-default-browser-check --disable-session-crashed-bubble --autoplay-policy=no-user-gesture-required --password-store=basic --class=PassCall"
+    if [ "$MODE" = "kiosk" ]; then
+      exec $INHIBIT $BROWSER $FLAGS --kiosk --start-fullscreen "--app=$URL"
+    else
+      exec $INHIBIT $BROWSER $FLAGS "--app=$URL"
+    fi
+    ;;
+esac

@@ -1,0 +1,14 @@
+# systemd user service for kiosk mode: starts the window with the graphical session and
+# brings it back if the browser ever exits. Enabled by install.sh --kiosk.
+[Unit]
+Description=PassCall window (kiosk)
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/passcall-window --kiosk
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
