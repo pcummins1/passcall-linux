@@ -6,21 +6,23 @@
 #   ./install.sh --remove   takes it all out again
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
-BIN="$HOME/.local/bin"; APPS="$HOME/.local/share/applications"; ICONS="$HOME/.local/share/icons/hicolor/512x512/apps"
+BIN="$HOME/.local/bin"; APPS="$HOME/.local/share/applications"; ICONS="$HOME/.local/share/icons/hicolor/512x512/apps"; META="$HOME/.local/share/metainfo"
 AUTOSTART="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"; UNITS="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 
 if [ "${1:-}" = "--remove" ]; then
   systemctl --user disable --now passcall-window.service 2>/dev/null || true
-  rm -f "$BIN/passcall-window" "$APPS/passcall.desktop" "$AUTOSTART/passcall-kiosk.desktop" "$UNITS/passcall-window.service" "$ICONS/passcall.png"
+  rm -f "$BIN/passcall-window" "$APPS/io.passcall.Window.desktop" "$APPS/passcall.desktop" "$AUTOSTART/passcall-kiosk.desktop" "$UNITS/passcall-window.service" "$ICONS/io.passcall.Window.png" "$ICONS/passcall.png" "$META/io.passcall.Window.metainfo.xml"
   systemctl --user daemon-reload 2>/dev/null || true
   echo "PassCall removed. Your sign-in and camera choice stay in ~/.config/passcall-window; delete that folder to forget them."
   exit 0
 fi
 
-mkdir -p "$BIN" "$APPS" "$ICONS"
+mkdir -p "$BIN" "$APPS" "$ICONS" "$META"
 install -m 755 "$HERE/bin/passcall-window" "$BIN/passcall-window"
-install -m 644 "$HERE/share/passcall.png" "$ICONS/passcall.png"
-install -m 644 "$HERE/share/passcall.desktop" "$APPS/passcall.desktop"
+install -m 644 "$HERE/share/io.passcall.Window.png" "$ICONS/io.passcall.Window.png"
+install -m 644 "$HERE/share/io.passcall.Window.desktop" "$APPS/io.passcall.Window.desktop"
+install -m 644 "$HERE/share/io.passcall.Window.metainfo.xml" "$META/io.passcall.Window.metainfo.xml"
+rm -f "$APPS/passcall.desktop" "$ICONS/passcall.png"   # names used before 1.0.0
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APPS" 2>/dev/null || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
 

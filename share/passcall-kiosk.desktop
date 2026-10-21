@@ -3,6 +3,6 @@ Type=Application
 Name=PassCall window (kiosk)
 Comment=Opens the PassCall window full screen at login
 Exec=passcall-window --kiosk
-Icon=passcall
+Icon=io.passcall.Window
 Terminal=false
 X-GNOME-Autostart-enabled=true

@@ -6,6 +6,15 @@ PassCall runs in the browser, so this is not another app to trust. It is a launc
 
 ## Install
 
+One line, no root, into your home folder:
+
+```
+curl -fsSL https://passcall.io/linux/get.sh | sh                 # app mode: PassCall in your application menu
+curl -fsSL https://passcall.io/linux/get.sh | sh -s -- --kiosk   # kiosk mode: full screen at every login
+```
+
+Or from a checkout:
+
 ```
 git clone https://github.com/pcummins1/passcall-linux.git
 cd passcall-linux
@@ -13,6 +22,13 @@ cd passcall-linux
 ./install.sh --kiosk    # kiosk mode: full screen at every login, for a dedicated screen
 ./install.sh --remove   # take it out again
 ```
+
+### Packages
+
+- **Debian, Ubuntu, Raspberry Pi OS, Mint:** download `passcall-window_<version>_all.deb` from the [latest release](https://github.com/pcummins1/passcall-linux/releases/latest) and install it with `sudo apt install ./passcall-window_*.deb` (or open it in your software centre). Kiosk mode is then `systemctl --user enable --now passcall-window.service`.
+- **Arch:** `packaging/aur/PKGBUILD` (AUR package `passcall-window` when published).
+- **Fedora and openSUSE:** `packaging/rpm/passcall-window.spec`, for COPR or the Open Build Service.
+- `packaging/build-deb.sh` builds the Debian package from a checkout; `share/io.passcall.Window.metainfo.xml` is the AppStream metadata the software centres show.
 
 Needs Chromium, Google Chrome, Brave or Firefox (Chromium-based browsers are preferred: the camera and video stack is better). Works on Debian, Ubuntu, Raspberry Pi OS, Fedora and friends, on X11 or Wayland.
 

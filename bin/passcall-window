@@ -9,6 +9,11 @@
 # the profile. Nothing else of yours is touched: the profile lives in
 # ~/.config/passcall-window, apart from your everyday browser.
 set -u
+VERSION="1.0.0"
+case "${1:-}" in
+  --version|-V) echo "passcall-window $VERSION"; exit 0 ;;
+  --help|-h) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+esac
 URL="https://my.passcall.io/"
 PROFILE="${XDG_CONFIG_HOME:-$HOME/.config}/passcall-window"
 MODE="app"

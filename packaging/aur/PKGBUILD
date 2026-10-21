@@ -1,0 +1,28 @@
+# Maintainer: Patrick Cummins <help at passcall dot io>
+pkgname=passcall-window
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="PassCall window launcher: a window between homes that opens when you both walk by"
+arch=('any')
+url="https://passcall.io/linux/"
+license=('MIT')
+depends=('sh')
+optdepends=('chromium: preferred browser'
+            'google-chrome: alternative browser'
+            'brave-bin: alternative browser'
+            'firefox: alternative browser'
+            'systemd: kiosk mode as a user service; keeps the machine awake')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/pcummins1/passcall-linux/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SHA256_OF_RELEASE_TARBALL')
+
+package() {
+  cd "passcall-linux-$pkgver"
+  install -Dm755 bin/passcall-window "$pkgdir/usr/bin/passcall-window"
+  install -Dm644 share/io.passcall.Window.desktop "$pkgdir/usr/share/applications/io.passcall.Window.desktop"
+  install -Dm644 share/io.passcall.Window.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/io.passcall.Window.png"
+  install -Dm644 share/io.passcall.Window.metainfo.xml "$pkgdir/usr/share/metainfo/io.passcall.Window.metainfo.xml"
+  sed 's#%h/.local/bin/passcall-window#/usr/bin/passcall-window#' share/passcall-window.service \
+    | install -Dm644 /dev/stdin "$pkgdir/usr/lib/systemd/user/passcall-window.service"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

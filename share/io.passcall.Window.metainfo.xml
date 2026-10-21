@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata: what GNOME Software, KDE Discover and the distribution
+     catalogues show for this package. -->
+<component type="desktop-application">
+  <id>io.passcall.Window</id>
+  <name>PassCall</name>
+  <summary>A window between homes</summary>
+  <developer id="io.passcall">
+    <name>PassCall LLC</name>
+  </developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>
+      PassCall turns a display with a camera into a window between two homes. When you
+      and a friend both walk past your screens at the same time, the window opens and
+      you see each other. There are no calls to make, no feed, no ads and no recording.
+    </p>
+    <p>
+      This package is the Linux launcher. It opens the PassCall web app in a browser
+      window of its own, with a separate browser profile, and keeps the machine awake
+      while the window is open. Kiosk mode starts the window full screen at login, for
+      an old laptop or small PC that lives on a shelf.
+    </p>
+    <p>
+      Needs Chromium, Google Chrome, Brave or Firefox. A free PassCall account is
+      required; friends are added by email address and only people who have added each
+      other can ever see one another.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.passcall.Window.desktop</launchable>
+  <provides>
+    <binary>passcall-window</binary>
+  </provides>
+  <url type="homepage">https://passcall.io/</url>
+  <url type="help">https://passcall.io/linux/</url>
+  <url type="bugtracker">https://github.com/pcummins1/passcall-linux/issues</url>
+  <url type="vcs-browser">https://github.com/pcummins1/passcall-linux</url>
+  <url type="contact">https://passcall.io/contact/</url>
+  <categories>
+    <category>Network</category>
+    <category>VideoConference</category>
+  </categories>
+  <keywords>
+    <keyword>window</keyword>
+    <keyword>family</keyword>
+    <keyword>video</keyword>
+    <keyword>presence</keyword>
+  </keywords>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-audio">intense</content_attribute>
+    <content_attribute id="social-contacts">intense</content_attribute>
+  </content_rating>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Two homes, one window: it opens when both sides walk by</caption>
+      <image>https://passcall.io/images/two-screens.jpg</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="1.0.0" date="2026-10-21">
+      <description>
+        <p>First packaged release: app and kiosk modes, systemd user service, Debian package, AppStream metadata.</p>
+      </description>
+    </release>
+  </releases>
+</component>
