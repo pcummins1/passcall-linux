@@ -1,0 +1,18 @@
+# systemd user service for screen saver mode: opens the PassCall window full screen when
+# the machine has sat unused for %i minutes and closes it when someone comes back. The
+# number after the @ is the minutes, e.g. passcall-idle@10.service. Enabled by
+# install.sh --idle 10.
+[Unit]
+Description=PassCall window after %i idle minutes
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/passcall-window --idle %i
+Restart=on-failure
+RestartSec=30
+# 2 means this desktop offers no way to read idle time; retrying would not help.
+RestartPreventExitStatus=2
+
+[Install]
+WantedBy=graphical-session.target

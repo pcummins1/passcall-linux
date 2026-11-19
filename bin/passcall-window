@@ -4,20 +4,28 @@
 #
 #   passcall-window            app mode: a normal window with the PassCall icon
 #   passcall-window --kiosk    kiosk mode: full screen, no browser chrome
+#   passcall-window --idle 10  screen saver mode: wait in the background, open the window
+#                              full screen once the machine has sat unused for 10 minutes,
+#                              and close it again when someone touches the keyboard or mouse
 #
 # The first run asks once for the camera and microphone; the answer is remembered in
 # the profile. Nothing else of yours is touched: the profile lives in
 # ~/.config/passcall-window, apart from your everyday browser.
 set -u
-VERSION="1.0.0"
+VERSION="1.1.0"
 case "${1:-}" in
   --version|-V) echo "passcall-window $VERSION"; exit 0 ;;
-  --help|-h) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --help|-h) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 esac
 URL="https://my.passcall.io/"
 PROFILE="${XDG_CONFIG_HOME:-$HOME/.config}/passcall-window"
 MODE="app"
-[ "${1:-}" = "--kiosk" ] && MODE="kiosk"
+IDLE_MIN=""
+case "${1:-}" in
+  --kiosk) MODE="kiosk" ;;
+  --idle) MODE="idle"; IDLE_MIN="${2:-10}" ;;
+  --idle-open|--idle-close) MODE="${1#--}" ;;   # used by swayidle, see below
+esac
 
 find_browser() {
   for b in chromium chromium-browser google-chrome google-chrome-stable brave-browser microsoft-edge; do
@@ -37,6 +45,98 @@ if [ -z "$BROWSER" ]; then
   echo "PassCall needs Chromium, Google Chrome, Brave or Firefox. Install one and run this again." >&2
   exit 1
 fi
+
+# ---- Screen saver mode -------------------------------------------------------------
+# A watcher that opens the window when the machine has been idle long enough and closes
+# it when someone comes back. It only ever closes a window it opened itself, and it
+# leaves alone a PassCall window that is already open.
+SELF="$0"
+RUN="${XDG_RUNTIME_DIR:-/tmp}/passcall-window-idle.$(id -u)"
+
+window_running() { pgrep -f -- "$PROFILE" >/dev/null 2>&1; }
+
+idle_open() {
+  window_running && return 0
+  dpms=0
+  if [ -n "${DISPLAY:-}" ] && command -v xset >/dev/null 2>&1 && xset q 2>/dev/null | grep -q "DPMS is Enabled"; then dpms=1; fi
+  # A session of its own, so the browser and everything it starts can be closed together.
+  setsid "$SELF" --kiosk >/dev/null 2>&1 &
+  echo "$! $dpms" > "$RUN"
+}
+
+idle_close() {
+  [ -f "$RUN" ] || return 0
+  read -r pid dpms < "$RUN" || true
+  rm -f "$RUN"
+  case "${pid:-}" in ''|*[!0-9]*) return 0 ;; esac
+  kill -s TERM -- "-$pid" 2>/dev/null || kill -s TERM "$pid" 2>/dev/null || true
+  # The window turned screen blanking off; give it back if it was on before.
+  if [ "${dpms:-0}" = 1 ] && [ -n "${DISPLAY:-}" ] && command -v xset >/dev/null 2>&1; then xset s on +dpms 2>/dev/null || true; fi
+}
+
+gdbus_idle() {
+  gdbus call --session --dest "$1" --object-path "$2" --method "$3" 2>/dev/null | sed -n 's/^(uint[0-9]* \([0-9][0-9]*\),)$/\1/p'
+}
+
+# Milliseconds since the last key press or pointer movement, from whichever source this
+# desktop has. PASSCALL_IDLE_CMD (a command that prints that number) overrides them all.
+idle_ms() {
+  case "$IDLE_SRC" in
+    cmd) sh -c "$PASSCALL_IDLE_CMD" 2>/dev/null ;;
+    mutter) gdbus_idle org.gnome.Mutter.IdleMonitor /org/gnome/Mutter/IdleMonitor/Core org.gnome.Mutter.IdleMonitor.GetIdletime ;;
+    muffin) gdbus_idle org.cinnamon.Muffin.IdleMonitor /org/cinnamon/Muffin/IdleMonitor/Core org.cinnamon.Muffin.IdleMonitor.GetIdletime ;;
+    xprintidle) xprintidle 2>/dev/null ;;
+    kde) gdbus_idle org.freedesktop.ScreenSaver /org/freedesktop/ScreenSaver org.freedesktop.ScreenSaver.GetSessionIdleTime ;;
+  esac
+}
+
+find_idle_source() {
+  if [ -n "${PASSCALL_IDLE_CMD:-}" ]; then echo cmd; return; fi
+  if command -v gdbus >/dev/null 2>&1; then
+    for IDLE_SRC in mutter muffin; do
+      case "$(idle_ms)" in ''|*[!0-9]*) ;; *) echo "$IDLE_SRC"; return ;; esac
+    done
+  fi
+  if [ "${XDG_SESSION_TYPE:-}" != "wayland" ] && [ -n "${DISPLAY:-}" ] && command -v xprintidle >/dev/null 2>&1; then echo xprintidle; return; fi
+  if command -v gdbus >/dev/null 2>&1; then
+    IDLE_SRC=kde
+    case "$(idle_ms)" in ''|*[!0-9]*) ;; *) echo kde; return ;; esac
+  fi
+  echo ""
+}
+
+case "$MODE" in
+  idle-open) idle_open; exit 0 ;;
+  idle-close) idle_close; exit 0 ;;
+  idle)
+    case "$IDLE_MIN" in ''|*[!0-9]*|0) echo "passcall-window --idle wants a whole number of minutes, for example: passcall-window --idle 10" >&2; exit 2 ;; esac
+    LIMIT=$((IDLE_MIN * 60000))
+    IDLE_SRC="$(find_idle_source)"
+    if [ -z "$IDLE_SRC" ]; then
+      # Sway, labwc (Raspberry Pi OS) and other wlroots desktops: swayidle is told by the
+      # compositor when the seat goes idle and when it wakes.
+      if [ -n "${WAYLAND_DISPLAY:-}" ] && command -v swayidle >/dev/null 2>&1; then
+        exec swayidle -w timeout $((IDLE_MIN * 60)) "'$SELF' --idle-open" resume "'$SELF' --idle-close"
+      fi
+      echo "PassCall cannot tell how long this desktop has been idle. Install xprintidle (X11) or swayidle (Sway, labwc), or set PASSCALL_IDLE_CMD to a command that prints the idle time in milliseconds." >&2
+      exit 2
+    fi
+    trap 'idle_close; exit 0' INT TERM HUP
+    while :; do
+      ms="$(idle_ms)"
+      case "$ms" in ''|*[!0-9]*) ms=0 ;; esac
+      if [ -f "$RUN" ]; then
+        read -r pid _ < "$RUN" || pid=""
+        if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then rm -f "$RUN"   # closed by hand
+        elif [ "$ms" -lt "$LIMIT" ]; then idle_close                        # someone is back
+        fi
+      elif [ "$ms" -ge "$LIMIT" ]; then
+        idle_open
+      fi
+      sleep "${PASSCALL_IDLE_POLL:-5}"
+    done
+    ;;
+esac
 
 # Keep the screen on and the machine awake for as long as the window runs. logind
 # covers sleep and the lid on every desktop; the X11 and GNOME calls cover screen blanking.

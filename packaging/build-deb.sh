@@ -16,7 +16,8 @@ install -m 644 "$HERE/share/io.passcall.Window.png" "$D/usr/share/icons/hicolor/
 install -m 644 "$HERE/share/io.passcall.Window.metainfo.xml" "$D/usr/share/metainfo/"
 # The home-folder install runs the launcher from ~/.local/bin; the package puts it in /usr/bin.
 sed 's#%h/.local/bin/passcall-window#/usr/bin/passcall-window#' "$HERE/share/passcall-window.service" > "$D/usr/lib/systemd/user/passcall-window.service"
-chmod 644 "$D/usr/lib/systemd/user/passcall-window.service"
+sed 's#%h/.local/bin/passcall-window#/usr/bin/passcall-window#' "$HERE/share/passcall-idle@.service" > "$D/usr/lib/systemd/user/passcall-idle@.service"
+chmod 644 "$D/usr/lib/systemd/user/passcall-window.service" "$D/usr/lib/systemd/user/passcall-idle@.service"
 install -m 644 "$HERE/README.md" "$D/usr/share/doc/$PKG/README.md"
 {
   echo "Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/"
@@ -37,7 +38,7 @@ Priority: optional
 Architecture: all
 Maintainer: PassCall LLC <help@passcall.io>
 Recommends: chromium | chromium-browser | google-chrome-stable | brave-browser | firefox
-Suggests: systemd
+Suggests: systemd, xprintidle | swayidle
 Homepage: https://passcall.io/linux/
 Installed-Size: $(du -sk "$D/usr" | cut -f1)
 Description: PassCall window launcher: a window between homes
@@ -50,6 +51,10 @@ Description: PassCall window launcher: a window between homes
  (Chromium, Chrome, Brave or Firefox), keeps the machine awake while the
  window is open, and offers a kiosk mode that starts full screen at login:
  systemctl --user enable --now passcall-window.service
+ .
+ Screen saver mode opens the window when the machine has sat unused, here
+ for ten minutes, and closes it when someone comes back:
+ systemctl --user enable --now passcall-idle@10.service
 CONTROL
 cat > "$D/DEBIAN/postinst" <<'POSTINST'
 #!/bin/sh

@@ -58,6 +58,11 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="1.1.0" date="2026-11-19">
+      <description>
+        <p>Screen saver mode: the window opens by itself when the machine has sat unused for the time you choose, and closes when you come back.</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-10-21">
       <description>
         <p>First packaged release: app and kiosk modes, systemd user service, Debian package, AppStream metadata.</p>

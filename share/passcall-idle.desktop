@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PassCall window when idle
+Comment=Opens the PassCall window after @MINUTES@ idle minutes and closes it when you come back
+Exec=passcall-window --idle @MINUTES@
+Icon=io.passcall.Window
+Terminal=false
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

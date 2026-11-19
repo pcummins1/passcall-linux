@@ -3,15 +3,28 @@
 #
 #   ./install.sh            app mode: PassCall appears in your application menu
 #   ./install.sh --kiosk    kiosk mode: the window opens full screen at every login
+#   ./install.sh --idle 10  screen saver mode: the window opens by itself when the machine
+#                           has sat unused for 10 minutes, and closes when you come back
+#   ./install.sh --idle off turns screen saver mode off again
 #   ./install.sh --remove   takes it all out again
 set -eu
 HERE="$(cd "$(dirname "$0")" && pwd)"
 BIN="$HOME/.local/bin"; APPS="$HOME/.local/share/applications"; ICONS="$HOME/.local/share/icons/hicolor/512x512/apps"; META="$HOME/.local/share/metainfo"
 AUTOSTART="${XDG_CONFIG_HOME:-$HOME/.config}/autostart"; UNITS="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 
+# Turn off whichever screen saver timer is set (the minutes are part of the unit name).
+idle_off() {
+  for l in "$UNITS"/graphical-session.target.wants/passcall-idle@*.service; do
+    [ -e "$l" ] || [ -L "$l" ] || continue
+    systemctl --user disable --now "$(basename "$l")" 2>/dev/null || rm -f "$l"
+  done
+  rm -f "$AUTOSTART/passcall-idle.desktop"
+}
+
 if [ "${1:-}" = "--remove" ]; then
   systemctl --user disable --now passcall-window.service 2>/dev/null || true
-  rm -f "$BIN/passcall-window" "$APPS/io.passcall.Window.desktop" "$APPS/passcall.desktop" "$AUTOSTART/passcall-kiosk.desktop" "$UNITS/passcall-window.service" "$ICONS/io.passcall.Window.png" "$ICONS/passcall.png" "$META/io.passcall.Window.metainfo.xml"
+  idle_off
+  rm -f "$UNITS/passcall-idle@.service" "$BIN/passcall-window" "$APPS/io.passcall.Window.desktop" "$APPS/passcall.desktop" "$AUTOSTART/passcall-kiosk.desktop" "$UNITS/passcall-window.service" "$ICONS/io.passcall.Window.png" "$ICONS/passcall.png" "$META/io.passcall.Window.metainfo.xml"
   systemctl --user daemon-reload 2>/dev/null || true
   echo "PassCall removed. Your sign-in and camera choice stay in ~/.config/passcall-window; delete that folder to forget them."
   exit 0
@@ -25,6 +38,27 @@ install -m 644 "$HERE/share/io.passcall.Window.metainfo.xml" "$META/io.passcall.
 rm -f "$APPS/passcall.desktop" "$ICONS/passcall.png"   # names used before 1.0.0
 command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$APPS" 2>/dev/null || true
 command -v gtk-update-icon-cache >/dev/null 2>&1 && gtk-update-icon-cache -q "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
+
+if [ "${1:-}" = "--idle" ]; then
+  MIN="${2:-10}"
+  idle_off
+  if [ "$MIN" = "off" ]; then
+    echo "Screen saver mode is off. PassCall stays in your application menu."
+    exit 0
+  fi
+  case "$MIN" in ''|*[!0-9]*|0) echo "Give the idle time as a whole number of minutes, for example: ./install.sh --idle 10" >&2; exit 1 ;; esac
+  mkdir -p "$AUTOSTART" "$UNITS"
+  install -m 644 "$HERE/share/passcall-idle@.service" "$UNITS/passcall-idle@.service"
+  if systemctl --user daemon-reload 2>/dev/null && systemctl --user enable --now "passcall-idle@$MIN.service" 2>/dev/null; then
+    echo "Screen saver mode: the PassCall window opens full screen after $MIN idle minutes and closes when you come back (systemd user service)."
+  else
+    sed "s/@MINUTES@/$MIN/g" "$HERE/share/passcall-idle.desktop" > "$AUTOSTART/passcall-idle.desktop"
+    echo "Screen saver mode: the PassCall window opens full screen after $MIN idle minutes and closes when you come back (autostart entry; starts at your next login)."
+  fi
+  echo "Open PassCall once from your application menu first, to sign in and allow the camera and microphone."
+  echo "Change the time with ./install.sh --idle <minutes>; turn it off with ./install.sh --idle off."
+  exit 0
+fi
 
 if [ "${1:-}" = "--kiosk" ]; then
   mkdir -p "$AUTOSTART" "$UNITS"

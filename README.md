@@ -20,6 +20,7 @@ git clone https://github.com/pcummins1/passcall-linux.git
 cd passcall-linux
 ./install.sh            # app mode: PassCall in your application menu
 ./install.sh --kiosk    # kiosk mode: full screen at every login, for a dedicated screen
+./install.sh --idle 10  # screen saver mode: the window opens after 10 idle minutes
 ./install.sh --remove   # take it out again
 ```
 
@@ -36,6 +37,7 @@ Needs Chromium, Google Chrome, Brave or Firefox (Chromium-based browsers are pre
 
 - **App mode** adds "PassCall" to your menu. It opens as its own window with the PassCall icon, next to whatever else you use the laptop for.
 - **Kiosk mode** starts the window full screen when you log in and restarts it if the browser ever exits (systemd user service, with an autostart entry as the fallback). Made for an old laptop or tablet that lives on a shelf.
+- **Screen saver mode** is for a computer you also use for other things. PassCall waits in the background; when the keyboard and mouse have been untouched for the time you chose, the window opens full screen, and it closes again the moment you come back. Set it with `./install.sh --idle 10` (minutes), change it by running that again with another number, and turn it off with `./install.sh --idle off`. From a package: `systemctl --user enable --now passcall-idle@10.service`. Open PassCall once by hand first, to sign in and allow the camera. It never closes a window you opened yourself.
 - While the window runs, the screen does not blank and the machine does not sleep, including when a laptop lid is closed (logind inhibit; `xset` on X11; GNOME's session inhibit where present).
 - The first run asks once for the camera and microphone. The browser profile at `~/.config/passcall-window` remembers your sign-in and that choice; your everyday browser is untouched.
 
@@ -43,6 +45,7 @@ Needs Chromium, Google Chrome, Brave or Firefox (Chromium-based browsers are pre
 
 - Switching modes: a browser already running with the PassCall profile keeps its current window, so close the open PassCall window before starting kiosk mode by hand.
 
+- Screen saver mode reads the idle time from GNOME or Cinnamon directly, from `xprintidle` on other X11 desktops, from KDE's screen saver service, and through `swayidle` on Sway and labwc (Raspberry Pi OS). On anything else, set `PASSCALL_IDLE_CMD` to a command that prints the idle time in milliseconds. Pick a time shorter than your screen lock, or the window opens behind the lock screen.
 - Lid closed on a laptop: the webcam is in the lid, so a laptop on a shelf wants the lid open. Use an external webcam if it must stay closed.
 - Auto-login: for a dedicated device, set your desktop to log in automatically so a power cut brings the window back on its own.
 - Raspberry Pi: this works on Pi OS with Chromium; the `passcall-pi` kit adds Home Assistant and a full kiosk image.
