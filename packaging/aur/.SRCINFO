@@ -1,6 +1,6 @@
 pkgbase = passcall-window
 	pkgdesc = PassCall window launcher: a window between homes that opens when you both walk by
-	pkgver = 1.0.0
+	pkgver = 1.1.0
 	pkgrel = 1
 	url = https://passcall.io/linux/
 	arch = any
@@ -10,8 +10,10 @@ pkgbase = passcall-window
 	optdepends = google-chrome: alternative browser
 	optdepends = brave-bin: alternative browser
 	optdepends = firefox: alternative browser
-	optdepends = systemd: kiosk mode as a user service; keeps the machine awake
-	source = passcall-window-1.0.0.tar.gz::https://github.com/pcummins1/passcall-linux/archive/refs/tags/v1.0.0.tar.gz
-	sha256sums = c7cd2ec21660494ef3f8027ea877a5134303624182a5f73f101f7b3f03287b62
+	optdepends = systemd: kiosk and screen saver modes as user services; keeps the machine awake
+	optdepends = xprintidle: screen saver mode on X11 desktops other than GNOME and Cinnamon
+	optdepends = swayidle: screen saver mode on Sway and labwc
+	source = passcall-window-1.1.0.tar.gz::https://github.com/pcummins1/passcall-linux/archive/refs/tags/v1.1.0.tar.gz
+	sha256sums = 7e88111727fd360ca00509ebe987d068488c65b9c39a07997d76bac75cd422c8
 
 pkgname = passcall-window
